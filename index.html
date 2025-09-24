@@ -176,7 +176,7 @@
 <body>
 
     <!-- Tela do Menu Inicial -->
-    <div id="menu-screen" class="screen active">
+    <div id="menu-screen" class="screen">
         <h1>Flappy Spider</h1>
         <h2>Placar de Líderes</h2>
         <ul id="leaderboard"></ul>
@@ -235,6 +235,7 @@
                 userId = user.uid;
                 document.getElementById('user-id-display').textContent = `Seu ID: ${userId}`;
                 loadLeaderboard();
+                showScreen('menu-screen'); // Mostra a tela do menu após a autenticação
             } else {
                 console.log("Nenhum usuário logado. Tentando login anônimo...");
                 await signInAnonymously(auth);
@@ -561,8 +562,6 @@
             } else {
                 signInAnonymously(auth);
             }
-
-            showScreen('menu-screen');
         });
     </script>
 </body>
