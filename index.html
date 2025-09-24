@@ -38,6 +38,7 @@
             border: 5px solid var(--pixel-color);
             box-shadow: 10px 10px 0 var(--pixel-color);
             position: relative;
+            text-align: center;
         }
 
         .screen.active {
@@ -176,7 +177,7 @@
 <body>
 
     <!-- Tela do Menu Inicial -->
-    <div id="menu-screen" class="screen">
+    <div id="menu-screen" class="screen active">
         <h1>Flappy Spider</h1>
         <h2>Placar de Líderes</h2>
         <ul id="leaderboard"></ul>
@@ -230,17 +231,26 @@
         const auth = getAuth(app);
         let userId;
 
+        // Inicia a autenticação e o carregamento do placar em segundo plano
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
                 document.getElementById('user-id-display').textContent = `Seu ID: ${userId}`;
                 loadLeaderboard();
-                showScreen('menu-screen'); // Mostra a tela do menu após a autenticação
             } else {
                 console.log("Nenhum usuário logado. Tentando login anônimo...");
                 await signInAnonymously(auth);
             }
         });
+
+        if (initialAuthToken) {
+            signInWithCustomToken(auth, initialAuthToken).catch(error => {
+                console.error("Erro ao fazer login com token personalizado:", error);
+                signInAnonymously(auth);
+            });
+        } else {
+            signInAnonymously(auth);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- Variáveis do Jogo ---
@@ -312,10 +322,6 @@
             }
 
             async function loadLeaderboard() {
-                if (!userId) {
-                    console.log("userId não disponível, aguardando autenticação...");
-                    return;
-                }
                 const leaderboardCollection = collection(db, `artifacts/${appId}/public/data/leaderboard`);
                 
                 onSnapshot(leaderboardCollection, (snapshot) => {
@@ -552,16 +558,6 @@
                     spider.velocity = spider.jumpPower;
                 }
             });
-
-            // --- Inicialização ---
-            if (initialAuthToken) {
-                signInWithCustomToken(auth, initialAuthToken).catch(error => {
-                    console.error("Erro ao fazer login com token personalizado:", error);
-                    signInAnonymously(auth);
-                });
-            } else {
-                signInAnonymously(auth);
-            }
         });
     </script>
 </body>
