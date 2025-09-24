@@ -1,1 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Spider</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="menu">
+            <h1>Flappy Spider</h1>
+            <input type="text" id="usernameInput" placeholder="Digite seu nome">
+            <button id="startButton">Jogar</button>
+        </div>
+        <div id="gameOverScreen">
+            <h2 id="gameOverMessage"></h2>
+            <p>Sua pontuação: <span id="scoreDisplay">0</span></p>
+            <button id="restartButton">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+
+</body>
+</html>
