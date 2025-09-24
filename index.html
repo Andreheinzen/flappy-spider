@@ -180,6 +180,7 @@
         <h1>Flappy Spider</h1>
         <h2>Placar de Líderes</h2>
         <ul id="leaderboard"></ul>
+        <div id="user-id-display"></div>
         <h3>Digite seu nome de usuário</h3>
         <input type="text" id="username-input" placeholder="Seu nome...">
         <button id="play-button" class="pixel-button">Jogar</button>
@@ -212,10 +213,36 @@
             <p>Conceito e design de prompt por André Savio</p>
         </div>
     </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
+        // Variáveis globais fornecidas pelo ambiente
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Configuração do Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('user-id-display').textContent = `Seu ID: ${userId}`;
+                loadLeaderboard();
+            } else {
+                console.log("Nenhum usuário logado. Tentando login anônimo...");
+                await signInAnonymously(auth);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Variáveis Globais ---
+            // --- Variáveis do Jogo ---
             const menuScreen = document.getElementById('menu-screen');
             const gameScreen = document.getElementById('game-screen');
             const gameOverScreen = document.getElementById('game-over-screen');
@@ -283,16 +310,41 @@
                 document.getElementById(screenId).classList.add('active');
             }
 
-            function loadLeaderboard() {
-                const savedLeaderboard = localStorage.getItem('flappySpiderLeaderboard');
-                if (savedLeaderboard) {
-                    leaderboard = JSON.parse(savedLeaderboard);
+            async function loadLeaderboard() {
+                if (!userId) {
+                    console.log("userId não disponível, aguardando autenticação...");
+                    return;
                 }
-                updateLeaderboardDisplay();
+                const leaderboardCollection = collection(db, `artifacts/${appId}/public/data/leaderboard`);
+                
+                onSnapshot(leaderboardCollection, (snapshot) => {
+                    leaderboard = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        leaderboard.push({ username: data.username, score: data.score });
+                    });
+                    updateLeaderboardDisplay();
+                });
             }
 
-            function saveLeaderboard() {
-                localStorage.setItem('flappySpiderLeaderboard', JSON.stringify(leaderboard));
+            async function saveLeaderboard() {
+                if (!userId) {
+                    console.log("userId não disponível, não foi possível salvar o placar.");
+                    return;
+                }
+                const docRef = doc(db, `artifacts/${appId}/public/data/leaderboard`, userId);
+                
+                // Verifica se já existe um recorde para este usuário e só atualiza se a nova pontuação for maior
+                const currentRecord = leaderboard.find(entry => entry.username === username);
+                if (!currentRecord || score > currentRecord.score) {
+                    await setDoc(docRef, {
+                        username: username,
+                        score: score
+                    });
+                    console.log("Placar salvo no Firestore!");
+                } else {
+                    console.log("Placar atual não é um recorde, não será salvo.");
+                }
             }
 
             function updateLeaderboardDisplay() {
@@ -333,17 +385,9 @@
                 gameState = 'gameOver';
                 finalScoreDisplay.textContent = `Pontuação: ${score}`;
                 
-                const existingPlayer = leaderboard.find(p => p.username === username);
-                if (existingPlayer) {
-                    if (score > existingPlayer.score) {
-                        existingPlayer.score = score;
-                    }
-                } else {
-                    leaderboard.push({ username, score });
-                }
-
+                // Salva a pontuação no banco de dados
                 saveLeaderboard();
-                updateLeaderboardDisplay();
+
                 showScreen('game-over-screen');
             }
 
@@ -508,12 +552,16 @@
                 }
             });
 
-            window.addEventListener('beforeunload', () => {
-                saveLeaderboard();
-            });
-
             // --- Inicialização ---
-            loadLeaderboard();
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken).catch(error => {
+                    console.error("Erro ao fazer login com token personalizado:", error);
+                    signInAnonymously(auth);
+                });
+            } else {
+                signInAnonymously(auth);
+            }
+
             showScreen('menu-screen');
         });
     </script>
