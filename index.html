@@ -1,33 +1,483 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Spider</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --pixel-color: #384236;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--pixel-color);
+            overflow: hidden;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            max-height: 800px;
+            background: linear-gradient(135deg, #4CAF50, #8BC34A, #3F51B5, #2196F3);
+            border: 5px solid var(--pixel-color);
+            box-shadow: 10px 10px 0 var(--pixel-color);
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        canvas {
+            display: block;
+            border-bottom: 5px solid var(--pixel-color);
+        }
+
+        h1, h2, h3 {
+            text-shadow: 2px 2px 0 var(--pixel-color);
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            text-shadow: 1px 1px 0 var(--pixel-color);
+        }
+
+        #menu-screen ul {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 2rem;
+            text-align: left;
+            width: 80%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid var(--pixel-color);
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+        }
+
+        #menu-screen ul li {
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+            text-shadow: 1px 1px 0 var(--pixel-color);
+        }
+        
+        #menu-screen ul li:first-child {
+            color: #FFD700; /* Cor de troféu */
+            text-shadow: 2px 2px 0 var(--pixel-color);
+            font-size: 1.8rem;
+        }
+
+        #username-input {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            padding: 5px;
+            text-align: center;
+            background-color: #fff;
+            border: 2px solid var(--pixel-color);
+            box-shadow: 5px 5px 0 var(--pixel-color);
+            outline: none;
+        }
+
+        .pixel-button {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            padding: 10px 20px;
+            margin-top: 1rem;
+            background-color: #fff;
+            color: var(--pixel-color);
+            border: 3px solid var(--pixel-color);
+            box-shadow: 5px 5px 0 var(--pixel-color);
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .pixel-button:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 3px 3px 0 var(--pixel-color);
+        }
+
+        .pixel-button:active {
+            transform: translate(5px, 5px);
+            box-shadow: 0 0 0 var(--pixel-color);
+        }
+
+        #game-over-screen {
+            text-align: center;
+        }
+
+        #game-over-screen h2 {
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        #credits-button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+        }
+
+        /* Modal de Créditos */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border: 5px solid var(--pixel-color);
+            box-shadow: 10px 10px 0 var(--pixel-color);
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: var(--pixel-color);
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div id="menu">
-            <h1>Flappy Spider</h1>
-            <input type="text" id="usernameInput" placeholder="Digite seu nome">
-            <button id="startButton">Jogar</button>
+    <!-- Tela do Menu Inicial -->
+    <div id="menu-screen" class="screen active">
+        <h1>Flappy Spider</h1>
+        <h2>Placar de Líderes</h2>
+        <ul id="leaderboard"></ul>
+        <h3>Digite seu nome de usuário</h3>
+        <input type="text" id="username-input" placeholder="Seu nome...">
+        <button id="play-button" class="pixel-button">Jogar</button>
+    </div>
 
-            <div id="scoreboard">
-                <h3>Placar dos Melhores</h3>
-                <ol id="scoreboardList"></ol>
-            </div>
-        </div>
-        <div id="gameOverScreen">
-            <h2 id="gameOverMessage"></h2>
-            <p>Sua pontuação: <span id="scoreDisplay">0</span></p>
-            <button id="restartButton">Jogar Novamente</button>
+    <!-- Tela do Jogo -->
+    <div id="game-screen" class="screen">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Tela de Game Over -->
+    <div id="game-over-screen" class="screen">
+        <h1>Game Over!</h1>
+        <h2 id="final-score">Pontuação: 0</h2>
+        <button id="play-again-button" class="pixel-button">Jogar Novamente</button>
+    </div>
+
+    <!-- Botão de Créditos -->
+    <button id="credits-button" class="pixel-button">Créditos</button>
+
+    <!-- Modal de Créditos -->
+    <div id="credits-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h1>Créditos</h1>
+            <p>Jogo Flappy Spider</p>
+            <p>Inspirado por Flappy Bird</p>
+            <p>Desenvolvido por Gemini</p>
+            <p>Design de Prompt por um Usuário Incrível</p>
         </div>
     </div>
 
-    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Variáveis Globais ---
+            const menuScreen = document.getElementById('menu-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const playButton = document.getElementById('play-button');
+            const playAgainButton = document.getElementById('play-again-button');
+            const usernameInput = document.getElementById('username-input');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const leaderboardList = document.getElementById('leaderboard');
+            const creditsButton = document.getElementById('credits-button');
+            const creditsModal = document.getElementById('credits-modal');
+            const closeModalButton = document.querySelector('.close-button');
 
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const gameWidth = 320;
+            const gameHeight = 480;
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+
+            let spider = {
+                x: 50,
+                y: gameHeight / 2,
+                size: 20,
+                gravity: 0.3,
+                velocity: 0,
+                jumpPower: -6,
+                isJumping: false,
+                draw: function() {
+                    ctx.fillStyle = 'var(--pixel-color)';
+                    // Corpo da aranha (desenho pixelizado)
+                    ctx.fillRect(this.x, this.y, this.size, this.size);
+                    ctx.fillRect(this.x + 4, this.y - 4, 12, 4);
+                    ctx.fillRect(this.x + 4, this.y + 20, 12, 4);
+                    // Olhos
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(this.x + 4, this.y + 4, 4, 4);
+                    ctx.fillRect(this.x + 12, this.y + 4, 4, 4);
+                }
+            };
+
+            let pipes = [];
+            let score = 0;
+            let speed = 2;
+            let pipeGap = 120;
+            let gameState = 'menu';
+            let leaderboard = [];
+            let username = 'Anônimo';
+            let lastPipeSpawn = Date.now();
+
+            // --- Funções de Estado do Jogo ---
+            function showScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById(screenId).classList.add('active');
+            }
+
+            function loadLeaderboard() {
+                const savedLeaderboard = localStorage.getItem('flappySpiderLeaderboard');
+                if (savedLeaderboard) {
+                    leaderboard = JSON.parse(savedLeaderboard);
+                }
+                updateLeaderboardDisplay();
+            }
+
+            function saveLeaderboard() {
+                localStorage.setItem('flappySpiderLeaderboard', JSON.stringify(leaderboard));
+            }
+
+            function updateLeaderboardDisplay() {
+                leaderboardList.innerHTML = '';
+                leaderboard.sort((a, b) => b.score - a.score);
+                leaderboard.forEach((entry, index) => {
+                    const li = document.createElement('li');
+                    let trophy = '';
+                    if (index === 0) {
+                        trophy = '🏆 ';
+                    }
+                    li.textContent = `${trophy}${entry.username}: ${entry.score}`;
+                    leaderboardList.appendChild(li);
+                });
+            }
+
+            function startGame() {
+                if (usernameInput.value.trim() !== '') {
+                    username = usernameInput.value.trim();
+                } else {
+                    username = 'Anônimo';
+                }
+
+                // Reset do jogo
+                spider.y = gameHeight / 2;
+                spider.velocity = 0;
+                pipes = [];
+                score = 0;
+                speed = 2;
+                pipeGap = 120;
+                gameState = 'playing';
+                
+                showScreen('game-screen');
+                gameLoop();
+            }
+
+            function endGame() {
+                gameState = 'gameOver';
+                finalScoreDisplay.textContent = `Pontuação: ${score}`;
+                
+                const existingPlayer = leaderboard.find(p => p.username === username);
+                if (existingPlayer) {
+                    if (score > existingPlayer.score) {
+                        existingPlayer.score = score;
+                    }
+                } else {
+                    leaderboard.push({ username, score });
+                }
+
+                saveLeaderboard();
+                updateLeaderboardDisplay();
+                showScreen('game-over-screen');
+            }
+
+            // --- Lógica do Jogo ---
+            function generatePipes() {
+                const pipeWidth = 30;
+                const pipeHeight = Math.floor(Math.random() * (gameHeight - pipeGap - 60)) + 30;
+                const newPipe = {
+                    x: gameWidth,
+                    y: 0,
+                    width: pipeWidth,
+                    height: pipeHeight,
+                    passed: false
+                };
+                pipes.push(newPipe);
+
+                const bottomPipeHeight = gameHeight - newPipe.height - pipeGap;
+                const bottomPipe = {
+                    x: gameWidth,
+                    y: gameHeight - bottomPipeHeight,
+                    width: pipeWidth,
+                    height: bottomPipeHeight,
+                    passed: false
+                };
+                pipes.push(bottomPipe);
+            }
+
+            function drawPipes() {
+                ctx.fillStyle = '#6B8E23'; // Cor dos canos
+                pipes.forEach(pipe => {
+                    ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+                    ctx.strokeStyle = '#556B2F';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(pipe.x, pipe.y, pipe.width, pipe.height);
+                });
+            }
+
+            function updatePipes() {
+                pipes.forEach(pipe => {
+                    pipe.x -= speed;
+                });
+                
+                if (pipes.length > 0 && pipes[0].x + pipes[0].width < 0) {
+                    pipes.splice(0, 2);
+                }
+
+                if (Date.now() - lastPipeSpawn > 2000) {
+                    generatePipes();
+                    lastPipeSpawn = Date.now();
+                }
+            }
+            
+            function checkCollision() {
+                // Colisão com o chão ou teto
+                if (spider.y + spider.size > gameHeight || spider.y < 0) {
+                    endGame();
+                }
+
+                // Colisão com os canos
+                pipes.forEach(pipe => {
+                    if (spider.x < pipe.x + pipe.width &&
+                        spider.x + spider.size > pipe.x &&
+                        spider.y < pipe.y + pipe.height &&
+                        spider.y + spider.size > pipe.y) {
+                            endGame();
+                        }
+                    
+                    // Incrementa a pontuação
+                    if (pipe.x + pipe.width < spider.x && !pipe.passed) {
+                        pipe.passed = true;
+                        score++;
+                        if (score % 5 === 0) {
+                            speed += 0.5; // Aumenta a dificuldade
+                        }
+                    }
+                });
+            }
+
+            function drawScore() {
+                ctx.fillStyle = 'var(--pixel-color)';
+                ctx.font = '3rem VT323';
+                ctx.fillText(score, gameWidth / 2 - 10, 50);
+            }
+
+            function clearCanvas() {
+                // Desenha o fundo gradiente
+                const gradient = ctx.createLinearGradient(0, 0, gameWidth, gameHeight);
+                gradient.addColorStop(0, '#87CEEB'); // Céu
+                gradient.addColorStop(0.5, '#4CAF50'); // Grama
+                gradient.addColorStop(1, '#6B8E23'); // Verde escuro
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, gameWidth, gameHeight);
+            }
+
+            function gameLoop() {
+                if (gameState !== 'playing') return;
+
+                clearCanvas();
+                
+                spider.velocity += spider.gravity;
+                spider.y += spider.velocity;
+                spider.draw();
+
+                updatePipes();
+                drawPipes();
+                drawScore();
+                checkCollision();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // --- Listeners de Eventos ---
+            playButton.addEventListener('click', () => {
+                startGame();
+            });
+
+            playAgainButton.addEventListener('click', () => {
+                startGame();
+            });
+
+            creditsButton.addEventListener('click', () => {
+                creditsModal.style.display = 'flex';
+            });
+
+            closeModalButton.addEventListener('click', () => {
+                creditsModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (e) => {
+                if (gameState === 'playing' && e.target.id !== 'credits-button') {
+                    spider.velocity = spider.jumpPower;
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (gameState === 'playing' && (e.key === ' ' || e.key === 'ArrowUp')) {
+                    spider.velocity = spider.jumpPower;
+                }
+            });
+
+            // --- Inicialização ---
+            loadLeaderboard();
+            showScreen('menu-screen');
+        });
+    </script>
 </body>
 </html>
