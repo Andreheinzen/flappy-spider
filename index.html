@@ -195,6 +195,7 @@
         <h1>Game Over!</h1>
         <h2 id="final-score">Pontuação: 0</h2>
         <button id="play-again-button" class="pixel-button">Jogar Novamente</button>
+        <button id="back-to-menu-button" class="pixel-button">Voltar ao Menu</button>
     </div>
 
     <!-- Botão de Créditos -->
@@ -208,7 +209,7 @@
             <p>Jogo Flappy Spider</p>
             <p>Inspirado por Flappy Bird</p>
             <p>Desenvolvido por Gemini</p>
-            <p>Design de Prompt por um Usuário Incrível</p>
+            <p>Conceito e design de prompt por André Savio</p>
         </div>
     </div>
 
@@ -220,6 +221,7 @@
             const gameOverScreen = document.getElementById('game-over-screen');
             const playButton = document.getElementById('play-button');
             const playAgainButton = document.getElementById('play-again-button');
+            const backToMenuButton = document.getElementById('back-to-menu-button');
             const usernameInput = document.getElementById('username-input');
             const finalScoreDisplay = document.getElementById('final-score');
             const leaderboardList = document.getElementById('leaderboard');
@@ -244,11 +246,19 @@
                 jumpPower: -6,
                 isJumping: false,
                 draw: function() {
-                    ctx.fillStyle = 'var(--pixel-color)';
                     // Corpo da aranha (desenho pixelizado)
+                    ctx.fillStyle = '#FFD700'; // Cor de ouro para maior visibilidade
                     ctx.fillRect(this.x, this.y, this.size, this.size);
                     ctx.fillRect(this.x + 4, this.y - 4, 12, 4);
                     ctx.fillRect(this.x + 4, this.y + 20, 12, 4);
+                    
+                    // Contorno para destacar mais
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(this.x, this.y, this.size, this.size);
+                    ctx.strokeRect(this.x + 4, this.y - 4, 12, 4);
+                    ctx.strokeRect(this.x + 4, this.y + 20, 12, 4);
+
                     // Olhos
                     ctx.fillStyle = '#fff';
                     ctx.fillRect(this.x + 4, this.y + 4, 4, 4);
@@ -418,6 +428,25 @@
                 ctx.fillText(score, gameWidth / 2 - 10, 50);
             }
 
+            function drawLeaderboardOnCanvas() {
+                ctx.fillStyle = 'var(--pixel-color)';
+                ctx.font = '1rem VT323';
+                ctx.textAlign = 'right';
+                ctx.fillText('Placar', gameWidth - 10, 30);
+                
+                let y = 50;
+                leaderboard.slice(0, 5).forEach((entry, index) => { // Mostra apenas os 5 primeiros
+                    let trophy = '';
+                    if (index === 0) {
+                        trophy = '🏆 ';
+                    }
+                    ctx.font = '1rem VT323';
+                    ctx.fillText(`${trophy}${entry.username}: ${entry.score}`, gameWidth - 10, y);
+                    y += 20;
+                });
+                ctx.textAlign = 'left';
+            }
+
             function clearCanvas() {
                 // Desenha o fundo gradiente
                 const gradient = ctx.createLinearGradient(0, 0, gameWidth, gameHeight);
@@ -440,6 +469,7 @@
                 updatePipes();
                 drawPipes();
                 drawScore();
+                drawLeaderboardOnCanvas();
                 checkCollision();
 
                 requestAnimationFrame(gameLoop);
@@ -452,6 +482,10 @@
 
             playAgainButton.addEventListener('click', () => {
                 startGame();
+            });
+            
+            backToMenuButton.addEventListener('click', () => {
+                showScreen('menu-screen');
             });
 
             creditsButton.addEventListener('click', () => {
@@ -472,6 +506,10 @@
                 if (gameState === 'playing' && (e.key === ' ' || e.key === 'ArrowUp')) {
                     spider.velocity = spider.jumpPower;
                 }
+            });
+
+            window.addEventListener('beforeunload', () => {
+                saveLeaderboard();
             });
 
             // --- Inicialização ---
