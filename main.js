@@ -209,6 +209,8 @@ function endGame() {
     scoreboard.sort((a, b) => b.score - a.score);
     
     saveScoreboard();
+
+    // Renderiza o placar no menu, mas só exibe na tela final de jogo
     renderScoreboard();
 
     gameOverMessage.textContent = `Fim de Jogo, ${username}!`;
@@ -217,8 +219,9 @@ function endGame() {
 }
 
 function restartGame() {
-    // Apenas chame startGame para reiniciar
-    startGame();
+    // Esconde a tela de game over e mostra o menu
+    gameOverScreen.style.display = 'none';
+    menu.style.display = 'block';
 }
 
 // Eventos
@@ -231,8 +234,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Exibe o menu inicial e carrega o placar ao carregar a página
+// Exibe o menu inicial e carrega/renderiza o placar ao carregar a página
 window.onload = () => {
     loadScoreboard();
+    renderScoreboard(); // Adicionado aqui para exibir o placar no menu
     menu.style.display = 'block';
 };
