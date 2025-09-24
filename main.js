@@ -17,8 +17,8 @@ let gameLoop;
 const gravity = 0.5;
 const jumpStrength = -8;
 const initialPipeSpeed = 2;
-let currentPipeSpeed = initialPipeSpeed; // Velocidade inicial dos canos
-const pipeSpeedIncrease = 0.2; // Aumento da velocidade a cada 5 pontos
+let currentPipeSpeed = initialPipeSpeed;
+const pipeSpeedIncrease = 0.2;
 const pipeWidth = 60;
 const pipeGap = 200;
 
@@ -149,3 +149,52 @@ function checkCollision() {
     }
     return false;
 }
+
+function startGame() {
+    username = usernameInput.value.trim();
+    if (username === '') {
+        alert('Por favor, digite seu nome de usuário!');
+        return;
+    }
+
+    isGameActive = true;
+    score = 0;
+    currentPipeSpeed = initialPipeSpeed;
+    pipes = [];
+    spider.y = canvas.height / 2;
+    spider.velocityY = 0;
+
+    menu.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+
+    // Inicia o loop do jogo aqui
+    gameLoop = setInterval(update, 1000 / 60);
+}
+
+function endGame() {
+    isGameActive = false;
+    clearInterval(gameLoop);
+    gameOverMessage.textContent = `Fim de Jogo, ${username}!`;
+    scoreDisplay.textContent = score;
+    gameOverScreen.style.display = 'block';
+}
+
+function restartGame() {
+    // Apenas chame startGame para reiniciar
+    startGame();
+}
+
+// Eventos
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', restartGame);
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && isGameActive) {
+        spider.velocityY = jumpStrength;
+    }
+});
+
+// Exibe o menu inicial ao carregar a página
+window.onload = () => {
+    menu.style.display = 'block';
+};
