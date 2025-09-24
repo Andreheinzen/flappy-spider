@@ -20,7 +20,7 @@ body {
 }
 
 #gameCanvas {
-    background: linear-gradient(#87CEEB, #2E8B57); /* Fundo azul para o céu e verde para a grama/chão */
+    background: linear-gradient(#87CEEB, #2E8B57);
     display: block;
 }
 
@@ -79,4 +79,31 @@ button:hover {
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 4px #000;
+}
+
+/* Estilos para o placar */
+#scoreboard {
+    margin-top: 20px;
+}
+
+#scoreboard h3 {
+    margin-bottom: 10px;
+    color: #ffd700; /* Dourado */
+}
+
+#scoreboardList {
+    list-style-type: none;
+    padding: 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+#scoreboardList li {
+    padding: 5px 0;
+    font-size: 1.1em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#scoreboardList li:last-child {
+    border-bottom: none;
 }

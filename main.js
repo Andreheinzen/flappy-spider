@@ -7,11 +7,13 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const scoreDisplay = document.getElementById('scoreDisplay');
 const restartButton = document.getElementById('restartButton');
 const gameOverMessage = document.getElementById('gameOverMessage');
+const scoreboardList = document.getElementById('scoreboardList');
 
 let isGameActive = false;
 let score = 0;
 let username = '';
 let gameLoop;
+let scoreboard = [];
 
 // Propriedades do jogo
 const gravity = 0.5;
@@ -41,6 +43,31 @@ let spider = {
 
 // Array para as colunas
 let pipes = [];
+
+// Funções do Placar
+function loadScoreboard() {
+    const scores = localStorage.getItem('flappySpiderScores');
+    if (scores) {
+        scoreboard = JSON.parse(scores);
+    }
+}
+
+function saveScoreboard() {
+    localStorage.setItem('flappySpiderScores', JSON.stringify(scoreboard));
+}
+
+function renderScoreboard() {
+    scoreboardList.innerHTML = '';
+    
+    // Limita a exibição aos top 10 scores
+    const topScores = scoreboard.slice(0, 10); 
+    
+    topScores.forEach((record, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. ${record.username} - ${record.score}`;
+        scoreboardList.appendChild(li);
+    });
+}
 
 // Funções de desenho
 function drawSpider() {
@@ -166,14 +193,24 @@ function startGame() {
 
     menu.style.display = 'none';
     gameOverScreen.style.display = 'none';
-
-    // Inicia o loop do jogo aqui
+    
+    // Inicia o loop do jogo
     gameLoop = setInterval(update, 1000 / 60);
 }
 
 function endGame() {
     isGameActive = false;
     clearInterval(gameLoop);
+    
+    // Adiciona a pontuação do jogador atual ao placar
+    scoreboard.push({ username: username, score: score });
+    
+    // Ordena o placar por pontuação decrescente
+    scoreboard.sort((a, b) => b.score - a.score);
+    
+    saveScoreboard();
+    renderScoreboard();
+
     gameOverMessage.textContent = `Fim de Jogo, ${username}!`;
     scoreDisplay.textContent = score;
     gameOverScreen.style.display = 'block';
@@ -194,7 +231,8 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Exibe o menu inicial ao carregar a página
+// Exibe o menu inicial e carrega o placar ao carregar a página
 window.onload = () => {
+    loadScoreboard();
     menu.style.display = 'block';
 };
