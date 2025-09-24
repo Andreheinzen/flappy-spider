@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const menu = document.getElementById('menu');
@@ -17,7 +16,9 @@ let gameLoop;
 // Propriedades do jogo
 const gravity = 0.5;
 const jumpStrength = -8;
-const pipeSpeed = 2;
+const initialPipeSpeed = 2;
+let currentPipeSpeed = initialPipeSpeed; // Velocidade inicial dos canos
+const pipeSpeedIncrease = 0.2; // Aumento da velocidade a cada 5 pontos
 const pipeWidth = 60;
 const pipeGap = 200;
 
@@ -87,7 +88,7 @@ function update() {
 
     // Lógica das colunas
     pipes.forEach(pipe => {
-        pipe.x -= pipeSpeed;
+        pipe.x -= currentPipeSpeed;
     });
 
     // Remove colunas que saíram da tela e adiciona novas
@@ -115,6 +116,11 @@ function update() {
         if (!pipe.passed && spider.x > pipe.x + pipeWidth) {
             pipe.passed = true;
             score++;
+
+            // Lógica para aumentar a velocidade a cada 5 pontos
+            if (score > 0 && score % 5 === 0) {
+                currentPipeSpeed += pipeSpeedIncrease;
+            }
         }
     });
 
@@ -143,49 +149,3 @@ function checkCollision() {
     }
     return false;
 }
-
-function startGame() {
-    username = usernameInput.value.trim();
-    if (username === '') {
-        alert('Por favor, digite seu nome de usuário!');
-        return;
-    }
-
-    isGameActive = true;
-    score = 0;
-    pipes = [];
-    spider.y = canvas.height / 2;
-    spider.velocityY = 0;
-
-    menu.style.display = 'none';
-    gameOverScreen.style.display = 'none';
-    gameLoop = setInterval(update, 1000 / 60); // 60 FPS
-}
-
-function endGame() {
-    isGameActive = false;
-    clearInterval(gameLoop);
-    gameOverMessage.textContent = `Fim de Jogo, ${username}!`;
-    scoreDisplay.textContent = score;
-    gameOverScreen.style.display = 'block';
-}
-
-function restartGame() {
-    gameOverScreen.style.display = 'none';
-    startGame();
-}
-
-// Eventos
-startButton.addEventListener('click', startGame);
-restartButton.addEventListener('click', restartGame);
-
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && isGameActive) {
-        spider.velocityY = jumpStrength;
-    }
-});
-
-// Exibe o menu inicial
-window.onload = () => {
-    menu.style.display = 'block';
-};
